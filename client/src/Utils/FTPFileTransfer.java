@@ -147,7 +147,6 @@ public class FTPFileTransfer{
 
 
 		try {
-
 			
 			if( messageFromServer.isFileStatus() == false ){
 
@@ -185,6 +184,7 @@ public class FTPFileTransfer{
 
 				decryptedFileString = encryptedFile;
 			}
+			
 			/*
 			if ((decryptedFileString == null) && (encryptedStatus.equals("N")))
 			{
@@ -299,6 +299,7 @@ public class FTPFileTransfer{
 			messageToClient.setFileName(requestedFileName);
 			messageToClient.setEncryptedFile(fileToClient);
 			messageToClient.setHashValue(shaFileToClient);
+			messageToClient.setFileStatus(true);
 		}
 	}
 	
