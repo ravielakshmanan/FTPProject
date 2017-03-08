@@ -139,7 +139,7 @@ public class FTPFileTransfer{
 	public static MessageContent getClient(String encryptedStatus, String password, MessageContent messageFromServer){
 	
 		MessageContent messageToClient = new MessageContent();
-		
+		String initVector_default = "randomInitVector";
 		try {
 			byte[] encryptedFile = messageFromServer.getEncryptedFile();
 			String encryptedFileHash = new String(messageFromServer.getHashValue());
@@ -153,9 +153,15 @@ public class FTPFileTransfer{
 				//DecryptUtil.decrypt
 				//Read the first 16 bytes to get the IV
 				String initVector = new String(Arrays.copyOf(encryptedFile, 16));
-				byte[] newEncryptedFile = Arrays.copyOfRange(encryptedFile, 16, encryptedFile.length);
+				if (initVector.equals(initVector_default)){
+					byte[] newEncryptedFile = Arrays.copyOfRange(encryptedFile, 16, encryptedFile.length);
 
-				decryptedFileString = DecryptUtil.decrypt(key, initVector, newEncryptedFile);
+					decryptedFileString = DecryptUtil.decrypt(key, initVector, newEncryptedFile);
+				}
+				else{
+					messageToClient.setMessageStatus("Error: decryption of  " + messageFromServer.getFileName() + " failed, was file encrypted?");
+					return messageToClient;
+				}
 			}
 
 			if (decryptedFileString == null){

@@ -18,7 +18,12 @@ public class DecryptUtil {
             cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
 
             //Generate the plain text
-            byte[] originalPlainText = cipher.doFinal(encryptedFile);
+            try{
+                byte[] originalPlainText = cipher.doFinal(encryptedFile);
+            }
+            catch(Exception e){
+                
+            }
             
             return originalPlainText;
         
