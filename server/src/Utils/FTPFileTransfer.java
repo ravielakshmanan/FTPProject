@@ -45,7 +45,7 @@ public class FTPFileTransfer{
 			
 			byte[] encryptedFile = EncryptUtil.encrypt(key, initVector, FileOperations.readFile(inputFile));// use password to generate IV
 
-			
+			/*
 			OutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream("encryptedFileTest"));
   			InputStream inputStream = new ByteArrayInputStream(encryptedFile);
   			int token = -1;
@@ -56,7 +56,7 @@ public class FTPFileTransfer{
 			 }
 			 bufferedOutputStream.flush();
 			 bufferedOutputStream.close();
-			 inputStream.close();
+			 inputStream.close();*/
 
 
 
@@ -142,11 +142,14 @@ public class FTPFileTransfer{
 
 		String initVector_default = "randomInitVector";
 
-		byte[] encryptedFile = null;
-		
+		byte[] encryptedFile = messageFromServer.getEncryptedFile();
+
 
 		try {
-			if( (encryptedStatus.equals("N")) && (!messageFromServer.isFileStatus())){
+
+			
+			if( (encryptedStatus.equals("N")) && (messageFromServer.isFileStatus() == false)){
+
 				return messageFromServer;
 			}
 
@@ -158,28 +161,43 @@ public class FTPFileTransfer{
 
 			//The client will decrypt the file if "E" was specified
 			if(encryptedStatus.equals("E")){
+
 				//DecryptUtil.decrypt
 				//Read the first 16 bytes to get the IV
 				encryptedFile = messageFromServer.getEncryptedFile();
 				String initVector = new String(Arrays.copyOf(encryptedFile, 16));
 				if (initVector.equals(initVector_default)){
+
 					byte[] newEncryptedFile = Arrays.copyOfRange(encryptedFile, 16, encryptedFile.length);
 
 					decryptedFileString = DecryptUtil.decrypt(key, initVector, newEncryptedFile);
 				}
 				else{
+
 					messageToClient.setMessageStatus("Error: decryption of  " + messageFromServer.getFileName() + " failed, was file encrypted?");
 					return messageToClient;
 				}
 			}
+			else{
 
-			if (decryptedFileString == null){
-				decryptedFileString = encryptedFile; // no encryption
+				decryptedFileString = encryptedFile;
 			}
+			/*
+			if ((decryptedFileString == null) && (encryptedStatus.equals("N")))
+			{
+				decryptedFileString = encryptedFile; // no encryption
+			}*/
 
 			
 			//The client will compute the sha256 hash of the plaintext file
+
+
 			String sha256_text = HashUtil.hashFileWithSHA256(decryptedFileString);
+
+
+
+
+			
 
 
 			//The client will compare the hash it computed to the hash that was received.
@@ -245,13 +263,16 @@ public class FTPFileTransfer{
 
 	//Check if input is directory
 	if(fileSentToClient.isDirectory()){
+
 		messageToClient.setFileStatus(false);
 		messageToClient.setMessageStatus("Error: Invalid file \"" + fileSentToClient + "\". No such file exists in current directory \"" + workingDir + "\".");
 	}
 	//Check if the file is an absolute or relative path
 	else if(!fileSentToClient.isAbsolute()){
+
 		//Check if the file exists
 		if(!fileSentToClient.exists()) {
+
 			messageToClient.setFileStatus(false);
 			messageToClient.setMessageStatus("Error: Invalid file \"" + fileSentToClient + "\". No such file exists in current directory \"" + workingDir + "\".");
 		}
@@ -259,8 +280,9 @@ public class FTPFileTransfer{
 			//read the file to create the byte arrays
 
 			byte[] fileToClient = FileOperations.readFile(fileSentToClient);
-			byte[] shaFileToClient = FileOperations.readFile(SHAFileSentToClient);
 
+			byte[] shaFileToClient = FileOperations.readFile(SHAFileSentToClient);
+			messageToClient.setFileStatus(true);
 			messageToClient.setFileName(requestedFileName);
 			messageToClient.setEncryptedFile(fileToClient);
 			messageToClient.setHashValue(shaFileToClient);

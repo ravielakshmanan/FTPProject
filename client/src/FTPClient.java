@@ -206,6 +206,7 @@ public class FTPClient{
 
                         // client sent a message to server to request a file
                             MessageContent messageFromServer = (MessageContent)objInput.readObject();
+
                         // server receive a message from client of requesting file
                             MessageContent message = FTPFileTransfer.getClient(mode, password, messageFromServer);
                         // get the message status
