@@ -3,6 +3,7 @@ package Utils;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.ByteBuffer;
 
 public class DecryptUtil {
 	
@@ -18,14 +19,21 @@ public class DecryptUtil {
             cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
 
             //Generate the plain text
+
             byte[] originalPlainText = cipher.doFinal(encryptedFile);
+
+
             
             return originalPlainText;
         
         } catch (Exception ex) {
-            ex.printStackTrace();
+            
+            ByteBuffer bb = ByteBuffer.allocate(4); 
+            bb.putInt(-1); 
+            //ex.printStackTrace();
+            return bb.array();
         }
 
-        return null;
+
     }
 }

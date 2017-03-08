@@ -19,11 +19,10 @@ public class MessageContent implements Serializable {
 	public void setMessageAttribute(String m_attr){
 		this.messageAttribute = m_attr;
 	}
-
 	public String getMessageAttribute(){
 		return this.messageAttribute;
 	}
-
+	
 	public boolean isFileStatus() {
 		return fileStatus;
 	}

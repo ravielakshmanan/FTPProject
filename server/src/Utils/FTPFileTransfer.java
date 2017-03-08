@@ -176,6 +176,7 @@ public class FTPFileTransfer{
 			if (decryptedFileString == null){
 				decryptedFileString = encryptedFile; // no encryption
 			}
+
 			
 			//The client will compute the sha256 hash of the plaintext file
 			String sha256_text = HashUtil.hashFileWithSHA256(decryptedFileString);
