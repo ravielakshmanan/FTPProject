@@ -216,24 +216,30 @@ public class FTPClient{
                         }
                         case "put":
                         {
-                        //Get current working directory
+                        	//Get current working directory
                             String workingDir = System.getProperty("user.dir");
-                        //Override working directory to the absolute path if provided
+                            //Override working directory to the absolute path if provided
                             if(inputFile.isAbsolute())
                                 workingDir = inputFile.getAbsolutePath();
 
-                        //Check if input is directory
+                            //Check if input is directory
                             if(inputFile.isDirectory()) {
-                                System.out.println("error: file inputted is a directory");
+                                System.out.println("Error: Input is a directory. Please enter a valid file.");
                                 break;
                             } else {
-                            //Check if the file is an absolute or relative path
-                                if(!inputFile.isAbsolute()){
+                            	//Check if the file is an absolute or relative path
+                            	if(!inputFile.isAbsolute()){
                                 //Check if the file exists
                                     if(!inputFile.exists()) {
-                                        System.out.println("error: file error");
+                                    	System.out.println("Error: Invalid file \"" + inputFile + "\". No such file exists in current directory \"" + workingDir + "\".");
                                         break;
                                     }
+                                }
+                                else{
+                                	if(!inputFile.exists()) {
+                                    	System.out.println("Error: Invalid file \"" + inputFile + "\". No such file exists in current directory \"" + workingDir + "\".");
+                                    	break;
+                            		}
                                 }
                             }
                             MessageContent mcWrapper = FTPFileTransfer.putClient(filename, mode, password);
