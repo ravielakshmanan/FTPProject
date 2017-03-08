@@ -1,0 +1,300 @@
+---------------------------------------------------------------------
+Specifications and Requirements
+---------------------------------------------------------------------
+
+
+
+---------------------------------------------------------------------
+packages needed to set up environment:
+---------------------------------------------------------------------
+
+First please be sure the following packages are installed on your system:
+
+JRE/JDK and JSSE
+
+sudo apt-get update
+
+sudo apt-get install default-jre
+
+---------------------------------------------------------------------
+Directory Setup
+---------------------------------------------------------------------
+
+Set up directories for the client and server:
+make the directories to store the keystores
+
+
+$ mkdir client
+$ mkdir server
+
+
+---------------------------------------------------------------------
+Certificate Setup
+---------------------------------------------------------------------
+We use the keytool utility to generate keystores and certificates as follows:
+
+We create a client keystore as well as a server keystore, and use the -genkeypair option to create the public and private key.  This option wraps the public key in a self-signed certificate which is stored in a single element cert chain.  We chose RSA as our signature algorithm and SHA-256 as our hash algorithm.  The password for client will be 'client' and the password for the server will be 'server'.  Below are the exact commands and options, with comments below explaining their functionality.
+
+*********************************************************************
+FOR REFERENCE:
+
+ keytool           key and certificate management tool
+
+-genkeypair        Generates a key pair
+-alias client      'client' or 'server'
+-keyalg RSA        RSA for algorithm
+-dname             "CN=client, OU=4180Group6, O=Columbia University, L=New York City, S=New York, C=US"
+-keypass           key password
+-storepass         keystore password
+-validity          how long our certificate is valid
+-keystore          location of where to write the keystore
+-storetype         jks for SSLSocket class
+
+* 2048 ( is default when using -genkeypair and -keyalg is "RSA")
+
+*********************************************************************
+
+use keytool utility to generate keystores, key pairs  and certificates
+
+$ keytool -genkeypair -alias client -keyalg RSA -dname "CN=client, OU=4180Group6, O=Columbia University, L=New York City, S=New York, C=US" -keypass client -storepass client -validity 365 -keystore client/client.keystore -storetype jks
+
+
+$ keytool -genkeypair -alias server -keyalg RSA -dname "CN=server, OU=4180Group6, O=Columbia University, L=New York City, S=New York, C=US" -keypass server -storepass server -validity 365 -keystore server/server.keystore -storetype jks
+
+IMPORT THE CERTIFICATES:
+The next step after keystore generation is we need the client and server to have trusted entries so we can perform 2-way or mutual authentication.  To do this we must export the certificates, then import them into the opposite truststores.  In this step we import into .pfx format:
+
+-exportcert         Exports certificate
+
+export certificates and import them into counterpart's trustsstore
+
+$ keytool -exportcert -alias client -file client/client.pfx -storetype jks -keystore client/client.keystore -storepass client
+
+Certificate stored in file <client/client.pfx>
+
+$ keytool -exportcert -alias server -file server/server.pfx -storetype jks -keystore server/server.keystore -storepass server
+
+Certificate stored in file <server/server.pfx>
+
+Next we import the server certificate into the client store and import the client certificate into the server store.
+
+import certificates into truststores
+
+****** not sure if i can automate this *******
+
+-importcert         Imports a certificate or a certificate chain
+
+$ keytool -importcert -alias client -file client/client.pfx -keypass client -storetype jks -keystore server/servertrust.keystore
+Enter keystore password:  server
+Re-enter new password:  server
+Owner: CN=client, OU=4180Group6, O=Columbia University, L=New York City, ST=New York, C=US
+Issuer: CN=client, OU=4180Group6, O=Columbia University, L=New York City, ST=New York, C=US
+Serial number: 4962dc0e
+Valid from: Sun Feb 26 01:08:49 UTC 2017 until: Mon Feb 26 01:08:49 UTC 2018
+Certificate fingerprints:
+	 MD5:  31:F2:47:BE:03:6D:5A:19:A6:71:02:9D:01:71:88:9D
+	 SHA1: A8:23:32:3D:A4:C8:A6:FF:5D:41:42:82:C9:3C:BA:A2:E5:9D:2F:B6
+	 SHA256: D2:37:11:B2:62:F4:40:C2:49:5E:13:B5:3A:E8:C6:1D:30:CE:6B:C3:E2:EE:C9:A8:67:DC:37:6F:16:50:61:A0
+	 Signature algorithm name: SHA256withRSA
+	 Version: 3
+
+Extensions:
+
+#1: ObjectId: 2.5.29.14 Criticality=false
+SubjectKeyIdentifier [
+KeyIdentifier [
+0000: 7D CE 1E 0C 21 86 FC F8   27 92 9D 0D F4 F3 A0 BA  ....!...'.......
+0010: 3A 07 8D C4                                        :...
+]
+]
+
+Trust this certificate? [no]:  yes
+Certificate was added to keystore
+
+---------------------- this seems to work --------------------------------
+********** trying this to bypass any user input *********
+$ keytool -importcert -alias client -file client/client.pfx -keypass client -noprompt -storetype jks -keystore server/servertrust.keystore -storepass client
+********* trying this to bypass any user input *********
+--------------------------------------------------------------------------
+
+$ keytool -importcert -alias server -file server/server.pfx -keypass server -storetype jks -keystore client/clienttrust.keystore
+Enter keystore password:  client
+Re-enter new password:  client
+Owner: CN=server, OU=4180Group6, O=Columbia University, L=New York City, ST=New York, C=US
+Issuer: CN=server, OU=4180Group6, O=Columbia University, L=New York City, ST=New York, C=US
+Serial number: 4e8cfccb
+Valid from: Sun Feb 26 01:52:11 UTC 2017 until: Mon Feb 26 01:52:11 UTC 2018
+Certificate fingerprints:
+	 MD5:  5F:71:38:4A:51:99:B4:BF:85:7B:2C:7A:40:E5:DE:3A
+	 SHA1: 47:4A:E0:2C:72:FC:86:5F:B5:37:80:9E:B1:45:67:45:80:05:E5:95
+	 SHA256: E9:97:FD:9D:DC:47:73:77:59:F1:77:AE:06:23:F1:47:F1:32:9D:6A:29:43:A0:71:76:F7:54:FF:CC:2E:EB:23
+	 Signature algorithm name: SHA256withRSA
+	 Version: 3
+
+Extensions:
+
+#1: ObjectId: 2.5.29.14 Criticality=false
+SubjectKeyIdentifier [
+KeyIdentifier [
+0000: 67 CE B1 69 AF 88 F1 74   A5 FE 03 13 AD 1B 4E 42  g..i...t......NB
+0010: C4 82 18 C1                                        ....
+]
+]
+
+Trust this certificate? [no]:  yes
+Certificate was added to keystore
+
+
+*after this process the environment should be set up as follows:
+drwxrwxr-x 2 sl3796 sl3796 4096 Feb 26 02:17 client/
+drwxrwxr-x 2 sl3796 sl3796 4096 Feb 26 02:14 server/
+
+............................................ client.java // TODO
+-rw-rw-r-- 1 sl3796 sl3796 2275 Feb 26 01:08 client.keystore
+-rw-rw-r-- 1 sl3796 sl3796  923 Feb 26 01:59 client.pfx
+-rw-rw-r-- 1 sl3796 sl3796  986 Feb 26 02:17 clienttrust.keystore
+
+............................................ server.java // TODO
+-rw-rw-r-- 1 sl3796 sl3796 2276 Feb 26 01:52 server.keystore
+-rw-rw-r-- 1 sl3796 sl3796  923 Feb 26 02:03 server.pfx
+-rw-rw-r-- 1 sl3796 sl3796  986 Feb 26 02:14 servertrust.keystore
+
+
+we can see the output of the public key in the keystore by running the following commands:
+
+$ keytool -list -v -keystore client.keystore -storepass client
+
+Keystore type: JKS
+Keystore provider: SUN
+
+Your keystore contains 1 entry
+
+Alias name: client
+Creation date: Feb 25, 2017
+Entry type: PrivateKeyEntry
+Certificate chain length: 1
+Certificate[1]:
+Owner: CN=client, OU=4180Group6, O=Columbia University, L=New York City, ST=New York, C=US
+Issuer: CN=client, OU=4180Group6, O=Columbia University, L=New York City, ST=New York, C=US
+Serial number: 7b815e3f
+Valid from: Sat Feb 25 23:34:48 EST 2017 until: Sun Feb 25 23:34:48 EST 2018
+Certificate fingerprints:
+	 MD5:  DA:11:D2:BA:42:A8:44:11:25:B9:A2:D9:86:13:46:6E
+	 SHA1: 18:F3:90:02:AB:19:36:59:E5:A4:E8:12:A2:26:21:BA:C9:DB:3F:FF
+	 SHA256: 26:E1:66:6B:7E:9C:B7:D6:41:C0:22:68:68:35:6D:00:29:BA:B9:85:84:EC:08:CC:47:8D:6D:A2:B1:89:10:65
+	 Signature algorithm name: SHA256withRSA
+	 Version: 3
+
+Extensions:
+
+#1: ObjectId: 2.5.29.14 Criticality=false
+SubjectKeyIdentifier [
+KeyIdentifier [
+0000: E0 46 20 56 9B 10 57 1A   94 57 08 56 B9 B5 7E 52  .F V..W..W.V...R
+0010: DE 96 EA 6D                                        ...m
+]
+]
+
+
+
+*******************************************
+*******************************************
+
+$ keytool -list -v -alias client -keystore client.keystore -storepass client
+Alias name: client
+Creation date: Feb 25, 2017
+Entry type: PrivateKeyEntry
+Certificate chain length: 1
+Certificate[1]:
+Owner: CN=client, OU=4180Group6, O=Columbia University, L=New York City, ST=New York, C=US
+Issuer: CN=client, OU=4180Group6, O=Columbia University, L=New York City, ST=New York, C=US
+Serial number: 7b815e3f
+Valid from: Sat Feb 25 23:34:48 EST 2017 until: Sun Feb 25 23:34:48 EST 2018
+Certificate fingerprints:
+	 MD5:  DA:11:D2:BA:42:A8:44:11:25:B9:A2:D9:86:13:46:6E
+	 SHA1: 18:F3:90:02:AB:19:36:59:E5:A4:E8:12:A2:26:21:BA:C9:DB:3F:FF
+	 SHA256: 26:E1:66:6B:7E:9C:B7:D6:41:C0:22:68:68:35:6D:00:29:BA:B9:85:84:EC:08:CC:47:8D:6D:A2:B1:89:10:65
+	 Signature algorithm name: SHA256withRSA
+	 Version: 3
+
+Extensions:
+
+#1: ObjectId: 2.5.29.14 Criticality=false
+SubjectKeyIdentifier [
+KeyIdentifier [
+0000: E0 46 20 56 9B 10 57 1A   94 57 08 56 B9 B5 7E 52  .F V..W..W.V...R
+0010: DE 96 EA 6D                                        ...m
+]
+]
+
+
+$ keytool -list -rfc -keystore client.keystore | openssl x509 -inform pem -pubkey
+Enter keystore password:  client
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu5UaUINPzgvaG1kJt9U1
+QRR8OUZPnjWvNfsaw5/uDIMk2hX/ffMFIHGUwgTB+mavbIMDSm+KxjbeQLbUq9vy
+6yVMuubKbSZ1A7V4Qs+Ex5gSI7ZX+U/H18vLez0ZQKuj+b9hNpDHAL8IyVrFe/1B
+Mnhk+6f5XdVnRPNos0vkquYTflGwaMo2sBXSznD6Xh8ac9BGTfhc008jtacuUUrj
+/M4AuHv7ieY00f8qsiyWeW6mjtklSG5JF4gLfzgK8HeQs+mnzhM5kYP1wsdqhAKU
+kkDwhACzEojd/MceArXY7n+nCqrTOau1z/8f6Fl26UPbPbdiK+ah/fSLueJN/sXR
+gQIDAQAB
+-----END PUBLIC KEY-----
+-----BEGIN CERTIFICATE-----
+MIIDlzCCAn+gAwIBAgIEe4FePzANBgkqhkiG9w0BAQsFADB8MQswCQYDVQQGEwJV
+UzERMA8GA1UECBMITmV3IFlvcmsxFjAUBgNVBAcTDU5ldyBZb3JrIENpdHkxHDAa
+BgNVBAoTE0NvbHVtYmlhIFVuaXZlcnNpdHkxEzARBgNVBAsTCjQxODBHcm91cDYx
+DzANBgNVBAMTBmNsaWVudDAeFw0xNzAyMjYwNDM0NDhaFw0xODAyMjYwNDM0NDha
+MHwxCzAJBgNVBAYTAlVTMREwDwYDVQQIEwhOZXcgWW9yazEWMBQGA1UEBxMNTmV3
+IFlvcmsgQ2l0eTEcMBoGA1UEChMTQ29sdW1iaWEgVW5pdmVyc2l0eTETMBEGA1UE
+CxMKNDE4MEdyb3VwNjEPMA0GA1UEAxMGY2xpZW50MIIBIjANBgkqhkiG9w0BAQEF
+AAOCAQ8AMIIBCgKCAQEAu5UaUINPzgvaG1kJt9U1QRR8OUZPnjWvNfsaw5/uDIMk
+2hX/ffMFIHGUwgTB+mavbIMDSm+KxjbeQLbUq9vy6yVMuubKbSZ1A7V4Qs+Ex5gS
+I7ZX+U/H18vLez0ZQKuj+b9hNpDHAL8IyVrFe/1BMnhk+6f5XdVnRPNos0vkquYT
+flGwaMo2sBXSznD6Xh8ac9BGTfhc008jtacuUUrj/M4AuHv7ieY00f8qsiyWeW6m
+jtklSG5JF4gLfzgK8HeQs+mnzhM5kYP1wsdqhAKUkkDwhACzEojd/MceArXY7n+n
+CqrTOau1z/8f6Fl26UPbPbdiK+ah/fSLueJN/sXRgQIDAQABoyEwHzAdBgNVHQ4E
+FgQU4EYgVpsQVxqUVwhWubV+Ut6W6m0wDQYJKoZIhvcNAQELBQADggEBAKmmO1Rb
+xQyImKNaZW+VzP0R6PzzKXsVz4dwfpBNY5jNUZLKcLXG4SLO7d6iCqIR/w9uykZ3
+3UhWCbW6eCLKw+MvCWhNEZ3sXLx91/p76s/AAXtcOBrJL+POAjAFOmEQzld7ryvK
+aoR19VYr1tIFvpFRFYpam6GLJtoMxmL2bsvnKFTpF0AhHmo/Grb0VIDuaHBzOiFp
+yVkdzZbGIfR+ov4z5V6TZsbvHbeSc4Ab3cfo3fU7mXvFcatk8VjZykdzXLxUJHzU
+T++jLSkm9pEJn9eZ+1BqVS1UZCxDj9MeBO7bYur0Xev8D9Zacdh1VI7Ljb57a/48
+Ne/NoKJ66frRFLc=
+-----END CERTIFICATE-----
+
+
+
+
+
+
+---------------------------------------------------------------------
+RUNNING THE CLIENT AND SERVER
+---------------------------------------------------------------------
+
+*the client and sever must be ran within their directories to access their keystores.*
+
+
+java -Djavax.net.debug=all server
+java -Djavax.net.debug=all client
+
+
+
+
+
+
+references:
+
+*********************************************************************
+
+https://docs.oracle.com/cd/E19159-01/819-3671/ablra/index.html
+
+http://docs.oracle.com/javase/7/docs/technotes/tools/windows/keytool.html
+
+https://www.ibm.com/support/knowledgecenter/SSCQGF_7.2.0.3/com.ibm.IBMDI.doc_7.2.0.3/c_admin_create_keys.html
+
+http://prasenjitdas235.blogspot.com/2014/11/2-way-ssl-with-example.html
+ http://illumineconsulting.blogspot.de/2014/01/implementing-2-way-ssl-in-java-using.html
+
+http://blog.palominolabs.com/2011/10/18/java-2-way-tlsssl-client-certificates-and-pkcs12-vs-jks-keystores/index.html
+
+http://bsaunder.github.io/security/server/ssl/tls/2012/07/03/generating-self-signed-certificates-for-mutual-authentication-in-java/
