@@ -99,7 +99,7 @@ public class FTPServer {
 					objOutput.writeObject(messageToClient);
 				}
 				else if (messageAttr.equals("get")){
-
+					System.out.println("get!");
 					MessageContent messageFromServer = FTPFileTransfer.getServer(messageFromClient);
 					objOutput.writeObject(messageFromServer);
 				}

@@ -109,7 +109,8 @@ public class FTPFileTransfer{
 		being transmitted with a ".sha256" extension added to the name. 
 		For example, if the file is abc.txt the hash file is named abc.txt.sha256
 		*/
-			String fileName = messageFromClient.getFileName();
+			//Get the file name only if absolute path is provided as input
+			String fileName = new File(messageFromClient.getFileName()).getName();
 			String shaName = fileName + ".sha256";
 			
 			byte[] fileFromClient = messageFromClient.getEncryptedFile();
@@ -154,7 +155,9 @@ public class FTPFileTransfer{
 			}
 
 			String encryptedFileHash = new String(messageFromServer.getHashValue());
-			String fileName = messageFromServer.getFileName() + ".out";
+			
+			String fileName = new File(messageFromServer.getFileName()).getName() + ".out";
+		
 			byte[] decryptedFileString = null;
 			
 			String key = password + "" + password;
@@ -194,12 +197,6 @@ public class FTPFileTransfer{
 
 			String sha256_text = HashUtil.hashFileWithSHA256(decryptedFileString);
 
-
-
-
-			
-
-
 			//The client will compare the hash it computed to the hash that was received.
 			if(sha256_text.equals(encryptedFileHash)){
 				/*
@@ -213,7 +210,6 @@ public class FTPFileTransfer{
 				(The programs will be tested with ASCII 
 				and binary files when being graded.) 
 				 */
-				System.out.println("the hash is the same");
 				FileOutputStream os = new FileOutputStream(fileName);
 				os.write(decryptedFileString);
 				os.close();
@@ -247,6 +243,7 @@ public class FTPFileTransfer{
 	and .sha256 extension in the directory as the file.
 	 */
 	String requestedFileName = messageFromClient.getFileName();
+	
 	String requestedHashFileName = messageFromClient.getFileName()+".sha256";
 
 	//File error handling pending
@@ -278,7 +275,6 @@ public class FTPFileTransfer{
 		}
 		else{
 			//read the file to create the byte arrays
-
 			byte[] fileToClient = FileOperations.readFile(fileSentToClient);
 
 			byte[] shaFileToClient = FileOperations.readFile(SHAFileSentToClient);
@@ -288,16 +284,22 @@ public class FTPFileTransfer{
 			messageToClient.setHashValue(shaFileToClient);
 		}
 	}
-	//Else read the file
+	//Else read the file if it exists
 	else{
-		//read the file to create the byte arrays
+		if(!fileSentToClient.exists()) {
 
-		byte[] fileToClient = FileOperations.readFile(fileSentToClient);
-		byte[] shaFileToClient = FileOperations.readFile(SHAFileSentToClient);
+			messageToClient.setFileStatus(false);
+			messageToClient.setMessageStatus("Error: Invalid file \"" + fileSentToClient + "\". No such file exists in current directory \"" + workingDir + "\".");
+		}
+		else{
+			//read the file to create the byte arrays
+			byte[] fileToClient = FileOperations.readFile(fileSentToClient);
+			byte[] shaFileToClient = FileOperations.readFile(SHAFileSentToClient);
 
-		messageToClient.setFileName(requestedFileName);
-		messageToClient.setEncryptedFile(fileToClient);
-		messageToClient.setHashValue(shaFileToClient);
+			messageToClient.setFileName(requestedFileName);
+			messageToClient.setEncryptedFile(fileToClient);
+			messageToClient.setHashValue(shaFileToClient);
+		}
 	}
 	
 	return messageToClient;
