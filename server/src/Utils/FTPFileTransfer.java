@@ -139,8 +139,12 @@ public class FTPFileTransfer{
 	public static MessageContent getClient(String encryptedStatus, String password, MessageContent messageFromServer){
 	
 		MessageContent messageToClient = new MessageContent();
+
+		String initVector_default = "randomInitVector";
+
 		byte[] encryptedFile = null;
 		
+
 		try {
 			if( (encryptedStatus.equals("N")) && (!messageFromServer.isFileStatus())){
 				return messageFromServer;
@@ -158,9 +162,15 @@ public class FTPFileTransfer{
 				//Read the first 16 bytes to get the IV
 				encryptedFile = messageFromServer.getEncryptedFile();
 				String initVector = new String(Arrays.copyOf(encryptedFile, 16));
-				byte[] newEncryptedFile = Arrays.copyOfRange(encryptedFile, 16, encryptedFile.length);
+				if (initVector.equals(initVector_default)){
+					byte[] newEncryptedFile = Arrays.copyOfRange(encryptedFile, 16, encryptedFile.length);
 
-				decryptedFileString = DecryptUtil.decrypt(key, initVector, newEncryptedFile);
+					decryptedFileString = DecryptUtil.decrypt(key, initVector, newEncryptedFile);
+				}
+				else{
+					messageToClient.setMessageStatus("Error: decryption of  " + messageFromServer.getFileName() + " failed, was file encrypted?");
+					return messageToClient;
+				}
 			}
 
 			if (decryptedFileString == null){
@@ -243,6 +253,16 @@ public class FTPFileTransfer{
 		if(!fileSentToClient.exists()) {
 			messageToClient.setFileStatus(false);
 			messageToClient.setMessageStatus("Error: Invalid file \"" + fileSentToClient + "\". No such file exists in current directory \"" + workingDir + "\".");
+		}
+		else{
+			//read the file to create the byte arrays
+
+			byte[] fileToClient = FileOperations.readFile(fileSentToClient);
+			byte[] shaFileToClient = FileOperations.readFile(SHAFileSentToClient);
+
+			messageToClient.setFileName(requestedFileName);
+			messageToClient.setEncryptedFile(fileToClient);
+			messageToClient.setHashValue(shaFileToClient);
 		}
 	}
 	//Else read the file

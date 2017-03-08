@@ -176,6 +176,7 @@ public class FTPFileTransfer{
 			if (decryptedFileString == null){
 				decryptedFileString = encryptedFile; // no encryption
 			}
+
 			
 			//The client will compute the sha256 hash of the plaintext file
 			String sha256_text = HashUtil.hashFileWithSHA256(decryptedFileString);
@@ -253,6 +254,16 @@ public class FTPFileTransfer{
 		if(!fileSentToClient.exists()) {
 			messageToClient.setFileStatus(false);
 			messageToClient.setMessageStatus("Error: Invalid file \"" + fileSentToClient + "\". No such file exists in current directory \"" + workingDir + "\".");
+		}
+		else{
+			//read the file to create the byte arrays
+
+			byte[] fileToClient = FileOperations.readFile(fileSentToClient);
+			byte[] shaFileToClient = FileOperations.readFile(SHAFileSentToClient);
+
+			messageToClient.setFileName(requestedFileName);
+			messageToClient.setEncryptedFile(fileToClient);
+			messageToClient.setHashValue(shaFileToClient);
 		}
 	}
 	//Else read the file

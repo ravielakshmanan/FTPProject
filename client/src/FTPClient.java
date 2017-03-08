@@ -162,7 +162,7 @@ public class FTPClient{
                         password = argumentArray[3].toString();
 
                         //Check if password exceeds 8 bytes
-                        if(password.getBytes(Charset.forName("UTF-8")).length > 8) {
+                        if(password.getBytes(Charset.forName("UTF-8")).length != 8) {
                             System.out.println("password must be 8 bytes");
                             break;
                         }
