@@ -139,9 +139,17 @@ public class FTPFileTransfer{
 	public static MessageContent getClient(String encryptedStatus, String password, MessageContent messageFromServer){
 	
 		MessageContent messageToClient = new MessageContent();
+
 		String initVector_default = "randomInitVector";
+
+		byte[] encryptedFile = null;
+		
+
 		try {
-			byte[] encryptedFile = messageFromServer.getEncryptedFile();
+			if( (encryptedStatus.equals("N")) && (!messageFromServer.isFileStatus())){
+				return messageFromServer;
+			}
+
 			String encryptedFileHash = new String(messageFromServer.getHashValue());
 			String fileName = messageFromServer.getFileName() + ".out";
 			byte[] decryptedFileString = null;
@@ -152,6 +160,7 @@ public class FTPFileTransfer{
 			if(encryptedStatus.equals("E")){
 				//DecryptUtil.decrypt
 				//Read the first 16 bytes to get the IV
+				encryptedFile = messageFromServer.getEncryptedFile();
 				String initVector = new String(Arrays.copyOf(encryptedFile, 16));
 				if (initVector.equals(initVector_default)){
 					byte[] newEncryptedFile = Arrays.copyOfRange(encryptedFile, 16, encryptedFile.length);
@@ -222,22 +231,41 @@ public class FTPFileTransfer{
 	String requestedHashFileName = messageFromClient.getFileName()+".sha256";
 
 	//File error handling pending
-	System.out.println("the client is requesting "+" "+requestedFileName);
 	File fileSentToClient = new File(requestedFileName);
-	System.out.println(requestedFileName+" existence: "+fileSentToClient.exists());
 	File SHAFileSentToClient = new File(requestedHashFileName);
-	System.out.println(requestedHashFileName+" existence: "+SHAFileSentToClient.exists());
 	
-	//read the file to create the byte arrays
-
-	byte[] fileToClient = FileOperations.readFile(fileSentToClient);
-	byte[] shaFileToClient = FileOperations.readFile(SHAFileSentToClient);
-
-
 	MessageContent messageToClient = new MessageContent();
-	messageToClient.setFileName(requestedFileName);
-	messageToClient.setEncryptedFile(fileToClient);
-	messageToClient.setHashValue(shaFileToClient);
+	
+	String workingDir = System.getProperty("user.dir");
+
+	//Override working directory to the absolute path if provided
+	if(fileSentToClient.isAbsolute())
+		workingDir = fileSentToClient.getAbsolutePath();
+
+	//Check if input is directory
+	if(fileSentToClient.isDirectory()){
+		messageToClient.setFileStatus(false);
+		messageToClient.setMessageStatus("Error: Invalid file \"" + fileSentToClient + "\". No such file exists in current directory \"" + workingDir + "\".");
+	}
+	//Check if the file is an absolute or relative path
+	else if(!fileSentToClient.isAbsolute()){
+		//Check if the file exists
+		if(!fileSentToClient.exists()) {
+			messageToClient.setFileStatus(false);
+			messageToClient.setMessageStatus("Error: Invalid file \"" + fileSentToClient + "\". No such file exists in current directory \"" + workingDir + "\".");
+		}
+	}
+	//Else read the file
+	else{
+		//read the file to create the byte arrays
+
+		byte[] fileToClient = FileOperations.readFile(fileSentToClient);
+		byte[] shaFileToClient = FileOperations.readFile(SHAFileSentToClient);
+
+		messageToClient.setFileName(requestedFileName);
+		messageToClient.setEncryptedFile(fileToClient);
+		messageToClient.setHashValue(shaFileToClient);
+	}
 	
 	return messageToClient;
 	

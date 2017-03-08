@@ -13,14 +13,25 @@ public class MessageContent implements Serializable {
 	private byte[] encryptedPassword;
 	private String messageStatus;
 	private String fileName;
+	private boolean fileStatus;
 	private String messageAttribute; // either get or put
 	
 	public void setMessageAttribute(String m_attr){
 		this.messageAttribute = m_attr;
 	}
+
 	public String getMessageAttribute(){
 		return this.messageAttribute;
 	}
+
+	public boolean isFileStatus() {
+		return fileStatus;
+	}
+
+	public void setFileStatus(boolean fileStatus) {
+		this.fileStatus = fileStatus;
+	}
+
 	public String getKey() {
 		return key;
 	}
