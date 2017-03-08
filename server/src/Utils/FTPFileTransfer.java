@@ -148,7 +148,7 @@ public class FTPFileTransfer{
 		try {
 
 			
-			if( (encryptedStatus.equals("N")) && (messageFromServer.isFileStatus() == false)){
+			if( messageFromServer.isFileStatus() == false ){
 
 				return messageFromServer;
 			}
