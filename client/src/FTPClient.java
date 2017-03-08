@@ -144,7 +144,17 @@ public class FTPClient{
                 }
                     //if stop command, exit
                 else{
+                        MessageContent messageToServer = new MessageContent();
+
+                        messageToServer.setMessageAttribute("stop");
+
+                        objOutput.writeObject(messageToServer);
+
+                        reader.close();
+                        out.close();
+                        sslSocket.close();
                         System.out.println("Exiting..."); // shouldnt we be closing socket etc...
+                        
                         System.exit(0);
                     }
                     /* check to make sure user enters an invalid mode */

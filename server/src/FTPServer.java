@@ -118,15 +118,19 @@ public class FTPServer {
 
 
                 if (messageAttr.equals("put")){
-                    System.out.println("put!");
+
                     MessageContent messageToClient = FTPFileTransfer.putServer(messageFromClient);
                     objOutput.writeObject(messageToClient);
                 }   
                 else if (messageAttr.equals("get")){
-                    System.out.println("get!");
+
                     MessageContent messageFromServer = FTPFileTransfer.getServer(messageFromClient);
                     objOutput.writeObject(messageFromServer);
                 }   
+                else if(messageAttr.equals("stop")){
+                    sslSocket.close(); 
+                    System.exit(0);
+                }
 
             }
 
