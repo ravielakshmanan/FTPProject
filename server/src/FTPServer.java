@@ -30,18 +30,18 @@ public class FTPServer {
 
 			if (args[0].length() > 5) {
 				System.out.println("error: usage FTPServer <port number>");
-				System.out.println("please input valid length port number > 0 and < 65535");
+				System.out.println("please input valid length port number > 1100 and < 65535");
 				System.exit(-1);
 			}
 
 			/* parse input and error check */
 			int portnum = Integer.parseInt(args[0]);
-			if(portnum < 0 || portnum > 65535)
+			if(portnum < 1100 || portnum > 65535)
 				IllegalArgumentsException.invalidPortNumber();
 
-			if(portnum < 0 || portnum > 65535) {
+			if(portnum < 1100 || portnum > 65535) {
 				System.out.println("error: usage FTPServer  <port number>");
-				System.out.println("please input valid port > 0 and < 65535");
+				System.out.println("please input valid port > 1100 and < 65535");
 				IllegalArgumentsException.invalidPortNumber();
 			}
 

@@ -42,20 +42,22 @@ public class FTPClient{
 
             if (args[1].length() > 5) {
                 System.out.println("error: usage <server ip> <port number>");
-                System.out.println("please input valid length port number > 0 and < 65535");
+                System.out.println("please input valid length port number > 1100 and < 65535");
                 System.exit(-1);
             }
 
             /* check for valid ip address */
-            if (serverIP.matches("^.[0-9]{1,3}\\..[0-9]{1,3}\\..[0-9]{1,3}\\..[0-9]{1,3}") != true){
+	    IPv4AddressValidator ipv4AddressValidator = new IPv4AddressValidator();
+	    boolean isValid = ipv4AddressValidator.validate(serverIP);
+            
+	    if (!isValid){
                 System.out.println("error: usage <server ip> <port number>");
                 System.out.println("please input valid IPv4 server address <[0-255].[0-255].[0-255].[0-255]>");
                 System.exit(-1);
             }
 
-            if(clientPort < 0 || clientPort > 65535) {
+            if(clientPort < 1100 || clientPort > 65535) {
                 System.out.println("error: usage FTPClient <server ip> <port number>");
-                System.out.println("please input valid port > 0 and < 65535");
                 IllegalArgumentsException.invalidPortNumber();
             }
 

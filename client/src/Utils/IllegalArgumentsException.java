@@ -35,7 +35,7 @@ public class IllegalArgumentsException {
     
     //Check if the port number passed in negative
     public static void invalidPortNumber(){
-        System.out.println("Error: Port number has to be between 0 and 65535. Please retry.");
+        System.out.println("Error: Port number has to be between 1100 and 65535. Please retry.");
         System.exit(1);
     }
     
